@@ -1,8 +1,8 @@
 name: RSS Route Proposal Handler
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, edited]   # 当 Issue 被创建或编辑时触发
 
 jobs:
   validate_and_process_rss_proposal:
@@ -24,5 +24,5 @@ jobs:
 
     - name: Process RSS Proposal
       env:
-        PR_BODY: ${{ github.event.pull_request.body }}
+        ISSUE_BODY: ${{ github.event.issue.body }}  # 从 Issue 提取正文内容
       run: python .github/scripts/rss_route_proposal_handler.py
