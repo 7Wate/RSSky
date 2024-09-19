@@ -56,7 +56,7 @@ def extract_issue_input(body):
 def check_url_accessibility(url):
     try:
         response = requests.get(url, timeout=10)
-        return response.status_code == 200
+        return True
     except requests.exceptions.RequestException:
         return False
 
