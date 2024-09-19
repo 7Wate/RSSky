@@ -5,6 +5,9 @@ import re
 import requests
 
 issue_body = os.getenv("ISSUE_BODY")
+issue_number = os.getenv("ISSUE_NUMBER")
+repo_name = os.getenv("GITHUB_REPOSITORY")
+github_token = os.getenv("GITHUB_TOKEN")
 
 category_mapping = {
     "社交平台": "social",
@@ -26,6 +29,30 @@ category_mapping = {
     "政务与通知": "government",
     "其他": "others",
 }
+
+
+def send_issue_comment(issue_number, comment):
+    """发送评论到 Issue"""
+    url = f"https://api.github.com/repos/{repo_name}/issues/{issue_number}/comments"
+    headers = {"Authorization": f"Bearer {github_token}"}
+    data = {"body": comment}
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code != 201:
+        print(f"Oops! 无法发送评论到 Issue: {response.text}")
+    else:
+        print(f"🎉 评论已成功发送到 Issue #{issue_number}!")
+
+
+def close_issue(issue_number):
+    """关闭 Issue"""
+    url = f"https://api.github.com/repos/{repo_name}/issues/{issue_number}"
+    headers = {"Authorization": f"Bearer {github_token}"}
+    data = {"state": "closed"}
+    response = requests.patch(url, json=data, headers=headers)
+    if response.status_code != 200:
+        print(f"Oops! 无法关闭 Issue: {response.text}")
+    else:
+        print(f"✅ Issue #{issue_number} 已成功关闭!")
 
 
 def extract_issue_input(body):
@@ -56,8 +83,33 @@ def check_url_accessibility(url):
         return False
 
 
-def update_json_file(category, site_url, rss_url, rss_description):
-    file_path = "routes.json"
+def route_exists_in_json(key):
+    file_path = "routes/routes.json"
+    if not os.path.exists(file_path):
+        return False
+    with open(file_path, "r") as file:
+        try:
+            data = json.load(file)
+        except json.JSONDecodeError:
+            return False
+    for entry in data:
+        if entry["key"] == key:
+            return True
+    return False
+
+
+def route_exists_in_markdown(category, site_url):
+    category_slug = category_mapping.get(category, "others")
+    category_md_path = f"docs/routes/{category_slug}.md"
+    if not os.path.exists(category_md_path):
+        return False
+    with open(category_md_path, "r") as file:
+        content = file.read()
+    return site_url in content
+
+
+def update_json_file(key, value):
+    file_path = "routes/routes.json"
     data = []
     if os.path.exists(file_path):
         with open(file_path, "r") as file:
@@ -66,28 +118,61 @@ def update_json_file(category, site_url, rss_url, rss_description):
             except json.JSONDecodeError:
                 pass
     entry = {
-        "category": category,
-        "site_url": site_url,
-        "rss_url": rss_url,
-        "rss_description": rss_description,
+        "key": key,
+        "value": value,
     }
     data.append(entry)
     with open(file_path, "w") as file:
         json.dump(data, file, indent=4)
+    return file_path
+
+
+def update_markdown_file(category, site_url, rss_url, rss_description):
+    category_slug = category_mapping.get(category, "others")
+    category_md_path = f"docs/routes/{category_slug}.md"
+    md_content = f"""
+## {site_url}
+
+- **RSS URL**: [{rss_url}]({rss_url})
+- **Description**: {rss_description}
+
+---
+"""
+    with open(category_md_path, "a") as category_md:
+        category_md.write(md_content)
+    print(f"📄 Updated {category_md_path} with new RSS route for {category}.")
 
 
 def main():
     site_url, rss_url, rss_description, category = extract_issue_input(issue_body)
+
     if not all([site_url, rss_url, rss_description, category]):
-        print("必要的字段缺失，请确保所有信息填写完整。")
+        send_issue_comment(issue_number, "⚠️ 必要的字段缺失，请确保所有信息填写完整。")
         return
+
     if not check_url_accessibility(site_url):
-        print(f"警告：{site_url} 无法访问，但继续处理。")
+        send_issue_comment(issue_number, f"⚠️ 警告：{site_url} 无法访问，但继续处理。")
+
     if not check_url_accessibility(rss_url):
-        print(f"错误：{rss_url} 无法访问。")
+        send_issue_comment(issue_number, f"❌ 错误：{rss_url} 无法访问。")
         return
-    update_json_file(category, site_url, rss_url, rss_description)
-    print(f"成功更新 routes.json 文件。")
+
+    key = f"{category}/{site_url}"
+    if route_exists_in_json(key) or route_exists_in_markdown(category, site_url):
+        send_issue_comment(
+            issue_number,
+            f"⚠️ 路由已存在于 routes.json 或对应的 Markdown 文档中，请人工手动处理。",
+        )
+        return
+
+    file_path = update_json_file(key, rss_url)
+    update_markdown_file(category, site_url, rss_url, rss_description)
+    send_issue_comment(
+        issue_number, f"🎉 成功更新了 routes.json 文件，并记录了新路由。"
+    )
+    close_issue(issue_number)
+
+    print(f"🎉 成功更新 {file_path} 文件，并关闭了 Issue #{issue_number}。")
 
 
 if __name__ == "__main__":

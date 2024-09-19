@@ -2,10 +2,10 @@ name: RSS Route Proposal Handler
 
 on:
   issues:
-    types: [opened, edited]   # 当 Issue 被创建或编辑时触发
+    types: [opened, edited]  # 在创建或编辑 Issue 时触发
 
 jobs:
-  validate_and_process_rss_proposal:
+  process_rss_proposal:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,5 +24,19 @@ jobs:
 
     - name: Process RSS Proposal
       env:
-        ISSUE_BODY: ${{ github.event.issue.body }}  # 从 Issue 提取正文内容
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
       run: python .github/scripts/rss_route_proposal_handler.py
+
+    - name: Commit changes
+      if: success()
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add routes.json
+        git commit -m "Update routes.json with new RSS route"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
