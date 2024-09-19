@@ -1,0 +1,79 @@
+name: "🧡 提交你的超棒 RSS 路由"
+description: 提交一个全新的 RSS 路由
+labels: ['RSS proposal']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🚀 欢迎你！感谢为 RSSky 提交新的 RSS 路由提案！在我们开始之前，先确保你做了以下几件小事：
+
+        1. 🧐 查阅一下 [文档](https://docs.rssky.org) 和 [Issue](https://github.com/7Wate/RSSky/issues) 确保没有类似的路由已经存在。
+        2. 源站木有自带 RSS 哦！（如果有的话，我们的提案可要落空了）
+
+        如果你有时间和兴趣，也可以参考 [指南](https://docs.rssky.org) 自己编写并提交 PR！那将会更棒！😎
+
+        💡 现在，请填写下面的表格吧，我们会尽快处理你的提案！
+
+  - type: input
+    id: site-url
+    attributes:
+      label: 官方网站地址
+      description: 请提供官方网站的 **地址链接** 以便生成唯一路由映射地址。
+      placeholder: https://wiki.7wate.com/
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: category
+    attributes:
+      label: 网站类型
+      description: 请选择你要提交的网站类型。
+      multiple: false
+      options:
+        - 社交平台
+        - 新闻媒体
+        - 博客
+        - 技术网站
+        - 设计与创意
+        - 在线教育
+        - 电商平台
+        - 影视与视频
+        - 音乐与播客
+        - 游戏
+        - 论坛与社区
+        - 科技产品更新
+        - 学术期刊
+        - 体育赛事
+        - 旅行与出行
+        - 金融与投资
+        - 政务与通知
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: rss-url
+    attributes:
+      label: 三方 RSS 地址
+      description: 请填写三方 RSS 地址，确保该地址能够正常访问。
+      placeholder: https://raw.githubusercontent.com/7Wate/wiki/refs/heads/quartz/index.xml
+    validations:
+      required: true
+
+  - type: textarea
+    id: rss-description
+    attributes:
+      label: 三方 RSS 使用说明
+      description: 请简要说明三方 RSS 的功能及使用说明，不超过 **1024 字符** 哦！
+      placeholder: 例如：这个 RSS 路由会抓取网站的新闻更新，并提供全文输出。并且 abc.xml 对应主题等等。
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 提交确认
+      options:
+        - label: 我已经搜索了[现有 Issue](https://github.com/7Wate/RSSky/issues) 和 [Pull Requests](https://github.com/7Wate/RSSky/pulls)，确保该 RSS 路由尚未被请求。🧐
+          required: true
