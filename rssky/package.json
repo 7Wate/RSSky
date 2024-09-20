@@ -3,11 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "login": "wrangler login",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "put-routes": "npx wrangler kv bulk put --binding KV_ROUTES ../routes/routes.json",
+    "delete-routes": "yes | npx wrangler kv bulk delete --binding KV_ROUTES ../routes/del_routes.json"
+
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.5.2",

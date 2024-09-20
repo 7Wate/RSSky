@@ -1,0 +1,33 @@
+name: Deploy Worker JS to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Worker to Cloudflare
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install dependencies and run build/test
+      - name: Install dependencies and build
+        working-directory: rssky
+        run: |
+          npm ci
+          npm run cf-typegen
+          npm run test
+
+      # Step 3: Deploy Worker to Cloudflare
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: rssky
+          postCommands: npm run put-routes && npm run delete-routes
